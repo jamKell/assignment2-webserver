@@ -32,6 +32,8 @@ def webServer(port=13331):
                 # If the file is not found, send a 404 error
                 error_message = b"HTTP/1.1 404 Not Found\r\n" \
                                 b"Content-Type: text/html; charset=UTF-8\r\n" \
+                                b"Server: Python Web Server\r\n" \
+                                b"Connection: close\r\n" \
                                 b"\r\n" \
                                 b"<html><body><h1>404 Not Found</h1></body></html>"
                 connectionSocket.send(error_message)  # Send the error message to the client
@@ -45,6 +47,8 @@ def webServer(port=13331):
             # Prepare the HTTP response headers
             outputdata = b"HTTP/1.1 200 OK\r\n" \
                          b"Content-Type: text/html; charset=UTF-8\r\n" \
+                         b"Server: Python Web Server\r\n" \
+                         b"Connection: close\r\n" \
                          b"Content-Length: " + str(len(content)).encode() + b"\r\n" \
                          b"\r\n"  # Blank line to separate headers and body
 
@@ -57,6 +61,8 @@ def webServer(port=13331):
             print(f"Error occurred: {e}")
             error_message = b"HTTP/1.1 500 Internal Server Error\r\n" \
                             b"Content-Type: text/html; charset=UTF-8\r\n" \
+                            b"Server: Python Web Server\r\n" \
+                            b"Connection: close\r\n" \
                             b"\r\n" \
                             b"<html><body><h1>500 Internal Server Error</h1></body></html>"
             connectionSocket.send(error_message)  # Send the error message to the client
