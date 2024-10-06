@@ -72,7 +72,7 @@ def webServer(port=13331):
 
       #Close client socket
       #Fill in start
-
+      connectionSocket.close()
       #Fill in end
 
   # Commenting out the below (some use it for local testing). It is not required for Gradescope, and some students have moved it erroneously in the While loop. 
