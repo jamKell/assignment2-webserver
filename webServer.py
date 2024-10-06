@@ -4,81 +4,71 @@ from socket import *
 import sys
 
 
-
 def webServer(port=13331):
-  serverSocket = socket(AF_INET, SOCK_STREAM)
-  
-  #Prepare a server socket
-  serverSocket.bind(("127.0.0.1", port))
-  
-  #Fill in start
-  serverSocket.listen()
-  #Fill in end
+    # Create a server socket
+    serverSocket = socket(AF_INET, SOCK_STREAM)
 
-  while True:
-    #Establish the connection
-    
-    print('Ready to serve...')
-    connectionSocket, addr = serverSocket.accept() #Fill in end
-    
-    try:
-      message = connectionSocket.recv(1024) #Fill in start -a client is sending you a message   #Fill in end 
-      filename = message.split()[1]
-      
-      #opens the client requested file. 
-      #Plenty of guidance online on how to open and read a file in python. How should you read it though if you plan on sending it through a socket?
-      f = open(filename[1:], 'r') #fill in start #fill in end
-      #fill in end
-      
+    # Prepare a server socket
+    serverSocket.bind(("127.0.0.1", port))
 
-      #This variable can store the headers you want to send for any valid or invalid request.   What header should be sent for a response that is ok?    
-      #Fill in start 
-         
-      #Content-Type is an example on how to send a header as bytes. There are more!
-      outputdata = b"HTTP/1.1 200 OK\r\n" \
-             b"Content-Type: text/html; charset=UTF-8\r\n" \
-             b"\r\n" 
+    # Start listening for incoming client connections
+    serverSocket.listen(1)  # Listen for one client at a time
 
+    print(f"Server listening on port {port}...")
 
-      #Note that a complete header must end with a blank line, creating the four-byte sequence "\r\n\r\n" Refer to https://w3.cs.jmu.edu/kirkpams/OpenCSF/Books/csf/html/TCPSockets.html
- 
-      #Fill in end
-      content = ""        
-      for i in f: #for line in file
-      #Fill in start -  #Fill in end 
-        content += i  
-      #Send the content of the requested file to the client (don't forget the headers you created)!
-      #Send everything as one send command, do not send one line/item at a time!
+    while True:
+        # Establish the connection
+        print('Ready to serve...')
+        connectionSocket, addr = serverSocket.accept()  # Accept incoming connection
 
-      # Fill in start
-      response = outputdata + content.encode() 
-      connectionSocket.send(response)
+        try:
+            message = connectionSocket.recv(1024)  # Receive the client's request message
+            filename = message.split()[1]  # Get the filename from the request (e.g., "/index.html")
 
-      # Fill in end
-        
-      connectionSocket.close() #closing the connection socket
-      
-    except Exception as e:
-      # Send response message for invalid request due to the file not being found (404)
-      # Remember the format you used in the try: block!
-      #Fill in start
+            # Open the requested file (skip the leading '/')
+            try:
+                f = open(filename[1:], 'r')  # Open the file in read mode
+            except FileNotFoundError:
+                # If the file is not found, send a 404 error
+                error_message = b"HTTP/1.1 404 Not Found\r\n" \
+                                b"Content-Type: text/html; charset=UTF-8\r\n" \
+                                b"\r\n" \
+                                b"<html><body><h1>404 Not Found</h1></body></html>"
+                connectionSocket.send(error_message)  # Send the error message to the client
+                connectionSocket.close()  # Close the connection
+                continue  # Skip further processing and go back to accepting new connections
 
-      #Fill in end
-      error_message = b"HTTP/1.1 404 Not Found\r\n" \
+            # If file is found, read its content
+            content = f.read()  # Read the entire file content
+            f.close()  # Close the file after reading
+
+            # Prepare the HTTP response headers
+            outputdata = b"HTTP/1.1 200 OK\r\n" \
+                         b"Content-Type: text/html; charset=UTF-8\r\n" \
+                         b"Content-Length: " + str(len(content)).encode() + b"\r\n" \
+                         b"\r\n"  # Blank line to separate headers and body
+
+            # Send the response (headers + content) in one go
+            response = outputdata + content.encode()  # Make sure to encode content as bytes
+            connectionSocket.send(response)  # Send the response
+
+        except Exception as e:
+            # Handle unexpected exceptions here (e.g., socket issues)
+            print(f"Error occurred: {e}")
+            error_message = b"HTTP/1.1 500 Internal Server Error\r\n" \
                             b"Content-Type: text/html; charset=UTF-8\r\n" \
                             b"\r\n" \
-                            b"<html><body><h1>404 Not Found</h1></body></html>"
-    connectionSocket.send(error_message)
+                            b"<html><body><h1>500 Internal Server Error</h1></body></html>"
+            connectionSocket.send(error_message)  # Send the error message to the client
 
-      #Close client socket
-      #Fill in start
-      connectionSocket.close()
-      #Fill in end
+        finally:
+            # Close the client connection socket
+            connectionSocket.close()
 
-  # Commenting out the below (some use it for local testing). It is not required for Gradescope, and some students have moved it erroneously in the While loop. 
-  # DO NOT PLACE ANYWHERE ELSE AND DO NOT UNCOMMENT WHEN SUBMITTING, YOU ARE GONNA HAVE A BAD TIME
-  #serverSocket.close()
-  #sys.exit()  # Terminate the program after sending the corresponding data
+    # Commented out as mentioned in the comments (do not uncomment in Gradescope)
+    # serverSocket.close()
+    # sys.exit()  # Terminate the program after sending the corresponding data
+
 
 if __name__ == "__main__":
-  webServer(13331)
+    webServer(13331)
